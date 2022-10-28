@@ -35,7 +35,7 @@ services:
 ---
 kind: pipeline
 type: docker
-name: deployment
+name: docker-registry-push
 
 trigger:
   branch:
@@ -94,7 +94,7 @@ clone:
   disable: true
 
 steps:
-  - name: deploy
+  - name: update
     image: quay.io/honestbee/drone-kubernetes
     settings:
       kubernetes_server:
