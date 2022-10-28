@@ -1,0 +1,24 @@
+FROM openjdk:17
+
+ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
+
+WORKDIR /deployments/
+
+# We make four distinct layers so if there are application changes the library layers can be re-used
+COPY target/quarkus-app/lib/ ./lib/
+COPY target/quarkus-app/*.jar .
+COPY target/quarkus-app/app/ ./app/
+COPY target/quarkus-app/quarkus/ ./quarkus/
+
+EXPOSE 8080
+
+ARG JAVA_OPTS="-Xmx1G"
+ARG JAVA_APP_JAR="./quarkus-run.jar"
+
+RUN echo "java $JAVA_OPTS -jar $JAVA_APP_JAR" > start.sh
+RUN chmod 777 start.sh
+
+CMD ["sh", "start.sh"]
+
+
+

@@ -35,13 +35,13 @@ public class GroupService {
     Group defaultAdminGroup;
 
     private void onStart(@Observes StartupEvent event) {
-        if(repository.existsById(convertNameToId(defaultUserName))) {
-            defaultUserGroup = repository.findById(convertNameToId(defaultUserName));
+        if(repository.existsById(convertToId(defaultUserName))) {
+            defaultUserGroup = repository.findById(convertToId(defaultUserName));
         } else {
             defaultUserGroup = create(defaultUserName);
         }
-        if(repository.existsById(convertNameToId(defaultAdminName))) {
-            defaultAdminGroup = repository.findById(convertNameToId(defaultAdminName));
+        if(repository.existsById(convertToId(defaultAdminName))) {
+            defaultAdminGroup = repository.findById(convertToId(defaultAdminName));
         } else {
             defaultAdminGroup = create(defaultAdminName, "*");
         }
@@ -49,14 +49,14 @@ public class GroupService {
 
     public Group create(String name, String... permissions) {
         Group group = new Group();
-        group.setId(convertNameToId(name));
+        group.setId(convertToId(name));
         group.setName(name);
         group.setPermissions(new HashSet<>(Arrays.asList(permissions)));
         repository.persist(group);
         return group;
     }
 
-    public String convertNameToId(String name) {
-        return name.replace(" ", "").toLowerCase();
+    public String convertToId(String input) {
+        return input.replace(" ", "").toLowerCase();
     }
 }

@@ -1,0 +1,110 @@
+---
+kind: pipeline
+type: docker
+name: pull-request
+
+trigger:
+  branch:
+    - master
+  event:
+    - pull_request
+
+steps:
+  - name: nexus-auth
+    image: md5lukas/drone-mvn-settings
+    settings:
+      servers:
+        - id: myanimeapp
+          username: myanimeapp-user
+      serverSecrets:
+        from_secret: NEXUS_CREDENTIALS
+  - name: test
+    image: maven:3.8.4
+    depends_on: [mongo]
+    environment:
+      - QUARKUS_MONGODB_CONNECTION_STRING: mongodb://mongo:27017
+    commands:
+      - mvn test -s settings.xml
+
+services:
+  - name: mongo
+    image: mongo:4
+    ports:
+      - 27017
+
+---
+kind: pipeline
+type: docker
+name: deployment
+
+trigger:
+  branch:
+    - master
+  event:
+    - push
+
+steps:
+  - name: nexus-auth
+    image: md5lukas/drone-mvn-settings
+    settings:
+      servers:
+        - id: myanimeapp
+          username: myanimeapp-user
+      serverSecrets:
+        from_secret: NEXUS_CREDENTIALS
+  - name: package
+    image: maven:3.8.4
+    depends_on: [nexus-auth, mongo]
+    environment:
+      - QUARKUS_MONGODB_CONNECTION_STRING: mongodb://mongo:27017
+    commands:
+      - mvn package -s settings.xml
+  - name: deploy-docker
+    image: plugins/docker
+    depends_on: [package]
+    settings:
+      username:
+        from_secret: NEXUS_DOCKER_USERNAME
+      password:
+        from_secret: NEXUS_DOCKER_PASSWORD
+      repo: docker.prismar.in/docker-private/auth-service
+      registry: docker.prismar.in
+      dockerfile: ./Dockerfile.jvm
+
+services:
+  - name: mongo
+    image: mongo:4
+    ports:
+      - 27017
+---
+kind: pipeline
+type: docker
+name: kubernetes-cluster-update
+
+trigger:
+  branch:
+    - master
+  event:
+    - push
+
+depends_on:
+  - deployment
+
+clone:
+  disable: true
+
+steps:
+  - name: apply
+    image: appleboy/drone-ssh
+    settings:
+      host:
+        from_secret: SERVER_HOST
+      username:
+        from_secret: SERVER_USER
+      password:
+        from_secret: SERVER_PASSWORD
+      port:
+        from_secret: SERVER_PORT
+      script:
+        - cd /home/kubernetes/files/myanimeapp
+        - microk8s kubectl apply -f auth-service.yaml
