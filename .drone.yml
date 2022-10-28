@@ -35,7 +35,7 @@ services:
 ---
 kind: pipeline
 type: docker
-name: deployment
+name: docker-registry-push
 
 trigger:
   branch:
@@ -59,7 +59,7 @@ steps:
       QUARKUS_MONGODB_CONNECTION_STRING: mongodb://mongo:27017
     commands:
       - mvn package -s settings.xml
-  - name: deploy-docker
+  - name: push
     image: plugins/docker
     depends_on: [package]
     settings:
@@ -88,13 +88,13 @@ trigger:
     - push
 
 depends_on:
-  - deployment
+  - docker-registry-push
 
 clone:
   disable: true
 
 steps:
-  - name: deploy
+  - name: update
     image: quay.io/honestbee/drone-kubernetes
     settings:
       kubernetes_server:
