@@ -94,17 +94,15 @@ clone:
   disable: true
 
 steps:
-  - name: apply
-    image: appleboy/drone-ssh
+  - name: deploy
+    image: quay.io/honestbee/drone-kubernetes
     settings:
-      host:
-        from_secret: SERVER_HOST
-      username:
-        from_secret: SERVER_USER
-      password:
-        from_secret: SERVER_PASSWORD
-      port:
-        from_secret: SERVER_PORT
-      script:
-        - cd /home/kubernetes/files/myanimeapp
-        - microk8s kubectl apply -f auth-service.yaml
+      kubernetes_server:
+        from_secret: KUBERNETES_SERVER
+      kubernetes_token:
+        from_secret: KUBERNETES_TOKEN
+      namespace: myanimeapp
+      deployment: auth-service
+      repo: docker.prismar.in/myanimeapp-docker/auth-service
+      container: app
+      tag: latest
