@@ -3,10 +3,15 @@ package app.myanime.auth.resource;
 import app.myanime.auth.model.Group;
 import app.myanime.auth.repository.GroupRepository;
 import app.myanime.auth.service.GroupService;
+import app.myanime.core.ValidationGroups;
 import app.myanime.core.exception.ServiceException;
+import io.quarkus.arc.log.LoggerName;
+import org.jboss.logging.Logger;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
+import javax.validation.Valid;
+import javax.validation.groups.ConvertGroup;
 import javax.ws.rs.*;
 import java.util.HashSet;
 import java.util.List;
@@ -27,6 +32,9 @@ public class GroupResource {
     @Inject
     GroupService service;
 
+    @LoggerName("group")
+    Logger logger;
+
     @GET
     @RolesAllowed("groups.get.all")
     public List<Group> getAll() {
@@ -46,10 +54,11 @@ public class GroupResource {
 
     @POST
     @RolesAllowed("groups.create")
-    public Group create(Group group) throws ServiceException {
+    public Group create(@Valid @ConvertGroup(to = ValidationGroups.Post.class) Group group) throws ServiceException {
         if(repository.existsById(service.convertToId(group.getName()))) {
             throw new ServiceException(409, "Name already taken");
         }
+        logger.info("Created new " + group.toString());
         return service.create(group.getName());
     }
 
@@ -69,6 +78,7 @@ public class GroupResource {
             persistGroup.setPermissions(group.getPermissions());
         }
         repository.update(persistGroup);
+        logger.info("Updated " + persistGroup);
         return persistGroup;
     }
 
@@ -82,6 +92,7 @@ public class GroupResource {
         }
         Group group = optional.get();
         repository.delete(group);
+        logger.info("Deleted " + group);
         return group;
     }
 }

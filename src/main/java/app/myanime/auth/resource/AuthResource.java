@@ -10,9 +10,12 @@ import app.myanime.auth.resource.response.AuthLoginResponse;
 import app.myanime.auth.service.UserService;
 import app.myanime.core.auth.provider.AuthResult;
 import app.myanime.core.exception.ServiceException;
+import io.quarkus.arc.log.LoggerName;
+import org.jboss.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.validation.Valid;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import java.util.Optional;
@@ -32,9 +35,12 @@ public class AuthResource {
     @Inject
     UserService service;
 
+    @LoggerName("auth")
+    Logger logger;
+
     @Path("/login/basic")
     @POST
-    public AuthLoginResponse loginBasic(AuthLoginBasicRequest request) throws ServiceException {
+    public AuthLoginResponse loginBasic(@Valid AuthLoginBasicRequest request) throws ServiceException {
         Optional<User> optional = repository.findByIdOptional(service.convertNameToId(request.getId()));
         if(!optional.isPresent()) {
             throw new ServiceException(404, "Wrong credentials");
@@ -49,7 +55,7 @@ public class AuthResource {
 
     @Path("/login/token")
     @POST
-    public AuthLoginResponse loginToken(AuthLoginTokenRequest request) throws ServiceException {
+    public AuthLoginResponse loginToken(@Valid AuthLoginTokenRequest request) throws ServiceException {
         Optional<AuthResult> authOptional = service.getProvider().auth(request.getToken());
         if(!authOptional.isPresent()) {
             throw new ServiceException(404, "Invalid token");
@@ -65,7 +71,7 @@ public class AuthResource {
 
     @Path("/register")
     @POST
-    public AuthLoginResponse register(AuthRegisterRequest request) throws ServiceException {
+    public AuthLoginResponse register(@Valid AuthRegisterRequest request) throws ServiceException {
         if(repository.existsById(service.convertNameToId(request.getName()))) {
             throw new ServiceException(403, "Name already taken");
 
@@ -74,6 +80,7 @@ public class AuthResource {
             throw new ServiceException(403, "Mail already taken");
         }
         User user = service.create(request.getName(), request.getPassword(), request.getMail());
+        logger.info("Registered new " + user);
         return new AuthLoginResponse(new UserDto(user), service.generateToken(user));
     }
 }

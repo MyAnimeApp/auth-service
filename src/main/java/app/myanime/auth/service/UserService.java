@@ -11,10 +11,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Copyright (c) Maga, All Rights Reserved
@@ -44,7 +41,7 @@ public class UserService {
         user.setName(name);
         user.setMail(mail);
         user.setPassword(hash(password));
-        user.setGroups(new HashSet<>());
+        user.setGroups(new HashSet<>(Arrays.asList(groupService.getDefaultUserGroup().getId())));
         repository.persist(user);
         return user;
     }

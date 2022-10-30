@@ -1,9 +1,11 @@
 package app.myanime.auth.model;
 
+import app.myanime.core.ValidationGroups;
 import io.quarkus.mongodb.panache.common.MongoEntity;
 import lombok.Data;
 import org.bson.codecs.pojo.annotations.BsonId;
 
+import javax.validation.constraints.NotBlank;
 import java.util.Set;
 
 /**
@@ -19,6 +21,11 @@ public class Group {
 
     @BsonId
     private String id;
+
+    @NotBlank(groups = {ValidationGroups.Post.class})
     private String name;
+
     private Set<String> permissions;
+
+
 }
