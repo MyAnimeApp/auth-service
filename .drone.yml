@@ -67,7 +67,7 @@ steps:
         from_secret: NEXUS_DOCKER_USERNAME
       password:
         from_secret: NEXUS_DOCKER_PASSWORD
-      repo: docker.prismar.in/myanimeapp-docker/auth-service
+      repo: docker.prismar.in/myanimeapp/auth-service
       registry: docker.prismar.in
       dockerfile: ./Dockerfile.jvm
 
@@ -103,6 +103,6 @@ steps:
         from_secret: KUBERNETES_TOKEN
       namespace: myanimeapp
       deployment: auth-service
-      repo: docker.prismar.in/myanimeapp-docker/auth-service
+      repo: docker.prismar.in/myanimeapp/auth-service
       container: app
       tag: latest

@@ -74,7 +74,6 @@ public class AuthResource {
     public AuthLoginResponse register(@Valid AuthRegisterRequest request) throws ServiceException {
         if(repository.existsById(service.convertNameToId(request.getName()))) {
             throw new ServiceException(403, "Name already taken");
-
         }
         if(repository.existsByMail(request.getMail())) {
             throw new ServiceException(403, "Mail already taken");
