@@ -28,10 +28,15 @@ public class GroupService {
     @ConfigProperty(name = "groups.default.user")
     String defaultUserName;
 
+    @ConfigProperty(name = "groups.default.verify")
+    String defaultVerifyName;
+
+
     @ConfigProperty(name = "groups.default.admin")
     String defaultAdminName;
 
     Group defaultUserGroup;
+    Group defaultVerifyGroup;
     Group defaultAdminGroup;
 
     private void onStart(@Observes StartupEvent event) {
@@ -39,6 +44,11 @@ public class GroupService {
             defaultUserGroup = repository.findById(convertToId(defaultUserName));
         } else {
             defaultUserGroup = create(defaultUserName);
+        }
+        if(repository.existsById(convertToId(defaultVerifyName))) {
+            defaultVerifyGroup = repository.findById(convertToId(defaultVerifyName));
+        } else {
+            defaultVerifyGroup = create(defaultVerifyName);
         }
         if(repository.existsById(convertToId(defaultAdminName))) {
             defaultAdminGroup = repository.findById(convertToId(defaultAdminName));

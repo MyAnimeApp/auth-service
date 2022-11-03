@@ -2,9 +2,9 @@ package app.myanime.auth.model;
 
 import io.quarkus.mongodb.panache.common.MongoEntity;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.bson.codecs.pojo.annotations.BsonId;
-
-import java.util.Set;
 
 /**
  * Copyright (c) Maga, All Rights Reserved
@@ -12,16 +12,12 @@ import java.util.Set;
  * Proprietary and confidential
  * Written by Maga
  **/
+@MongoEntity(collection = "verification_codes")
 @Data
-@MongoEntity(collection = "users")
-public class User {
+public class Verification {
 
     @BsonId
     private String id;
-
-    private String name;
-    private String password;
-    private String mail;
-
-    private Set<String> groups;
+    private String user;
+    private long timestamp;
 }
