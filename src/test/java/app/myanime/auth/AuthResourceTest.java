@@ -12,6 +12,8 @@ import app.myanime.auth.service.VerificationService;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
@@ -31,6 +33,7 @@ public class AuthResourceTest {
 
     @Inject
     UserService userService;
+
 
     @Inject
     VerificationService verificationService;
@@ -77,6 +80,6 @@ public class AuthResourceTest {
                 .post("/verify")
                 .then()
                 .statusCode(200)
-                .body("user.id", is(user.getId()));
+                .body("user.groups", is(Matchers.contains(userService.getGroupService().getDefaultVerifyGroup().getId())));
     }
 }
