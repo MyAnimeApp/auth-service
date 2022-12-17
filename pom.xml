@@ -43,6 +43,10 @@
             <artifactId>quarkus-hibernate-validator</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-mailer</artifactId>
+        </dependency>
+        <dependency>
             <groupId>app.myanime</groupId>
             <artifactId>core</artifactId>
             <version>1.0.0</version>

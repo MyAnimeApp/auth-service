@@ -37,13 +37,25 @@ public class UserService {
 
     public User create(String name, String password, String mail) {
         User user = new User();
-        user.setId(convertNameToId(name));
+        user.setId(convertToId(name));
         user.setName(name);
         user.setMail(mail);
         user.setPassword(hash(password));
         user.setGroups(new HashSet<>(Arrays.asList(groupService.getDefaultUserGroup().getId())));
         repository.persist(user);
         return user;
+    }
+
+    public Optional<User> promote(String id, String group) {
+        Optional<User> optional = repository.findByIdOptional(convertToId(id));
+        if(optional.isPresent()) {
+            User user = optional.get();
+            user.getGroups().clear();
+            user.getGroups().add(group);
+            repository.update(user);
+            return Optional.of(user);
+        }
+        return Optional.empty();
     }
 
     public String generateToken(User user) {
@@ -58,7 +70,7 @@ public class UserService {
         return provider.generateToken(user.getId(), expiration, roles);
     }
 
-    public String convertNameToId(String name) {
+    public String convertToId(String name) {
         return name.replace(" ", "").toLowerCase();
     }
 

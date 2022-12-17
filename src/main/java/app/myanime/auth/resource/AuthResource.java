@@ -1,19 +1,22 @@
 package app.myanime.auth.resource;
 
 import app.myanime.auth.model.User;
+import app.myanime.auth.model.Verification;
 import app.myanime.auth.model.dto.UserDto;
 import app.myanime.auth.repository.UserRepository;
+import app.myanime.auth.repository.VerificationRepository;
 import app.myanime.auth.resource.request.AuthLoginBasicRequest;
 import app.myanime.auth.resource.request.AuthLoginTokenRequest;
 import app.myanime.auth.resource.request.AuthRegisterRequest;
+import app.myanime.auth.resource.request.AuthVerifyRequest;
 import app.myanime.auth.resource.response.AuthLoginResponse;
 import app.myanime.auth.service.UserService;
+import app.myanime.auth.service.VerificationService;
 import app.myanime.core.auth.provider.AuthResult;
 import app.myanime.core.exception.ServiceException;
 import io.quarkus.arc.log.LoggerName;
 import org.jboss.logging.Logger;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.ws.rs.POST;
@@ -35,13 +38,16 @@ public class AuthResource {
     @Inject
     UserService service;
 
+    @Inject
+    VerificationService verificationService;
+
     @LoggerName("auth")
     Logger logger;
 
     @Path("/login/basic")
     @POST
     public AuthLoginResponse loginBasic(@Valid AuthLoginBasicRequest request) throws ServiceException {
-        Optional<User> optional = repository.findByIdOptional(service.convertNameToId(request.getId()));
+        Optional<User> optional = repository.findByIdOptional(service.convertToId(request.getId()));
         if(!optional.isPresent()) {
             throw new ServiceException(404, "Wrong credentials");
         }
@@ -72,14 +78,40 @@ public class AuthResource {
     @Path("/register")
     @POST
     public AuthLoginResponse register(@Valid AuthRegisterRequest request) throws ServiceException {
-        if(repository.existsById(service.convertNameToId(request.getName()))) {
+        if(repository.existsById(service.convertToId(request.getName()))) {
             throw new ServiceException(403, "Name already taken");
         }
         if(repository.existsByMail(request.getMail())) {
             throw new ServiceException(403, "Mail already taken");
         }
         User user = service.create(request.getName(), request.getPassword(), request.getMail());
+        Verification verification = verificationService.send(user.getId(), user.getMail());
         logger.info("Registered new " + user);
+        logger.info("Sending verification mail " + verification);
         return new AuthLoginResponse(new UserDto(user), service.generateToken(user));
+    }
+
+    @Path("/verify")
+    @POST
+    public AuthLoginResponse verify(@Valid AuthVerifyRequest request) throws ServiceException {
+        VerificationRepository repository = verificationService.getRepository();
+        Optional<Verification> optional = repository.findByIdOptional(request.getCode());
+        if(!optional.isPresent()) {
+            throw new ServiceException(409, "Invalid code");
+        }
+        Verification verification = optional.get();
+        if(!verification.getUser().equalsIgnoreCase(request.getUser())) {
+            throw new ServiceException(409, "Invalid user");
+        }
+        Optional<User> userOptional = service.promote(verification.getUser(), service.getGroupService().getDefaultVerifyGroup().getId());
+        if(userOptional.isPresent()) {
+            User user = userOptional.get();
+            UserDto dto = new UserDto(user);
+            logger.info("Successfully verified " + dto);
+            return new AuthLoginResponse(dto, service.generateToken(user));
+        } else {
+            logger.error("Cannot verify " + verification.getUser() + " because user does not exists");
+            throw new ServiceException(409, "User does not exists");
+        }
     }
 }

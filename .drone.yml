@@ -20,7 +20,7 @@ steps:
         from_secret: NEXUS_CREDENTIALS
   - name: test
     image: maven:3.8.4
-    depends_on: [mongo]
+    depends_on: [mongo, nexus-auth]
     environment:
       QUARKUS_MONGODB_CONNECTION_STRING: mongodb://mongo:27017
     commands:

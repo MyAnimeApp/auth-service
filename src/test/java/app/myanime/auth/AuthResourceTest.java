@@ -1,14 +1,19 @@
 package app.myanime.auth;
 
 import app.myanime.auth.model.User;
+import app.myanime.auth.model.Verification;
 import app.myanime.auth.resource.AuthResource;
 import app.myanime.auth.resource.request.AuthLoginBasicRequest;
 import app.myanime.auth.resource.request.AuthLoginTokenRequest;
 import app.myanime.auth.resource.request.AuthRegisterRequest;
+import app.myanime.auth.resource.request.AuthVerifyRequest;
 import app.myanime.auth.service.UserService;
+import app.myanime.auth.service.VerificationService;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
@@ -28,6 +33,10 @@ public class AuthResourceTest {
 
     @Inject
     UserService userService;
+
+
+    @Inject
+    VerificationService verificationService;
 
     @Test
     public void testLoginBasicEndpoint() {
@@ -60,5 +69,17 @@ public class AuthResourceTest {
                 .then()
                 .statusCode(200)
                 .body("user.id", is("testregister"));
+    }
+
+    @Test
+    public void testVerifyEndpoint() {
+        User user = userService.create("testverify", "1234", "testverify@test");
+        Verification verification = verificationService.send(user.getId(), user.getMail());
+        given().body(new AuthVerifyRequest(verification.getUser(), verification.getId())).contentType(ContentType.JSON)
+                .when()
+                .post("/verify")
+                .then()
+                .statusCode(200)
+                .body("user.groups", is(Matchers.contains(userService.getGroupService().getDefaultVerifyGroup().getId())));
     }
 }
